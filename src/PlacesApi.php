@@ -8,50 +8,52 @@ use SKAgarwal\GoogleApi\Exceptions\GooglePlacesApiException;
 class PlacesApi
 {
     const NEARBY_SEARCH_URL = 'nearbysearch/json';
-    
+
     const TEXT_SEARCH_URL = 'textsearch/json';
-    
+
     const RADAR_SEARCH_URL = 'radarsearch/json';
-    
+
     const DETAILS_SEARCH_URL = 'details/json';
-    
+
     const PLACE_AUTOCOMPLETE_URL = 'autocomplete/json';
-    
+
     const QUERY_AUTOCOMPLETE_URL = 'queryautocomplete/json';
-    
+
     const PLACE_ADD_URL = 'add/json';
-    
+
     const PLACE_DELETE_URL = 'delete/json';
-    
+
     /**
      * @var
      */
     public $status;
-    
+
     /**
      * @var null
      */
     private $key = null;
-    
+
     /**
      * @var \GuzzleHttp\Client
      */
     private $client;
-    
+
     /**
      * PlacesApi constructor.
      *
      * @param null $key
      */
-    public function __construct($key = null)
+    public function __construct($key = null, $params = [])
     {
         $this->key = $key;
-        
-        $this->client = new Client([
-            'base_uri' => 'https://maps.googleapis.com/maps/api/place/',
-        ]);
+
+        if( !$params['base_uri']) {
+            $params['base_uri'] => 'https://maps.googleapis.com/maps/api/place/';
+        }
+
+        $this->client = new Client($params);
     }
-    
+
     /**
      * Place Nearby Search Request to google api.
      *
@@ -65,13 +67,13 @@ class PlacesApi
     public function nearbySearch($location, $radius = null, $params = [])
     {
         $this->checkKey();
-        
+
         $params = $this->prepareNearbySearchParams($location, $radius, $params);
         $response = $this->makeRequest(self::NEARBY_SEARCH_URL, $params);
-        
+
         return $this->convertToCollection($response, 'results');
     }
-    
+
     /**
      * Place Text Search Request to google places api.
      *
@@ -84,14 +86,14 @@ class PlacesApi
     public function textSearch($query, $params = [])
     {
         $this->checkKey();
-        
+
         $params['query'] = $query;
         $response = $this->makeRequest(self::TEXT_SEARCH_URL, $params);
-        
+
         return $this->convertToCollection($response, 'results');
-        
+
     }
-    
+
     /**
      * Radar Search Request to google api
      *
@@ -107,14 +109,14 @@ class PlacesApi
     public function radarSearch($location, $radius, array $params)
     {
         $this->checkKey();
-        
+
         $params = $this->prepareRadarSearchParams($location, $radius, $params);
-        
+
         $response = $this->makeRequest(self::RADAR_SEARCH_URL, $params);
-        
+
         return $this->convertToCollection($response, 'results');
     }
-    
+
     /**
      * Place Details Request to google places api.
      *
@@ -127,14 +129,14 @@ class PlacesApi
     public function placeDetails($placeId, $params = [])
     {
         $this->checkKey();
-        
+
         $params['placeid'] = $placeId;
-        
+
         $response = $this->makeRequest(self::DETAILS_SEARCH_URL, $params);
-        
+
         return $this->convertToCollection($response);
     }
-    
+
     /**
      * Place AutoComplete Request to google places api.
      *
@@ -146,14 +148,14 @@ class PlacesApi
     public function placeAutocomplete($input, $params = [])
     {
         $this->checkKey();
-        
+
         $params['input'] = $input;
-        
+
         $response = $this->makeRequest(self::PLACE_AUTOCOMPLETE_URL, $params);
-        
+
         return $this->convertToCollection($response, 'predictions');
     }
-    
+
     /**
      * Query AutoComplete Request to the google api.
      *
@@ -166,14 +168,14 @@ class PlacesApi
     public function queryAutocomplete($input, $params = [])
     {
         $this->checkKey();
-        
+
         $params['input'] = $input;
-        
+
         $response = $this->makeRequest(self::QUERY_AUTOCOMPLETE_URL, $params);
-        
+
         return $this->convertToCollection($response, 'predictions');
     }
-    
+
     /**
      * Adds a place to Google's database
      *
@@ -187,12 +189,12 @@ class PlacesApi
     public function addPlace($params)
     {
         $this->checkKey();
-        
+
         $response = $this->makeRequest(self::PLACE_ADD_URL, $params, 'post');
-        
+
         return $this->convertToCollection($response);
     }
-    
+
     /**
      * Adds a place to Google's database
      *
@@ -206,14 +208,14 @@ class PlacesApi
     public function deletePlace($placeId)
     {
         $this->checkKey();
-        
+
         $params['place_id'] = $placeId;
-        
+
         $response = $this->makeRequest(self::PLACE_DELETE_URL, $params, 'post');
-        
+
         return $this->convertToCollection($response);
     }
-    
+
     /**
      * @param $uri
      * @param $params
@@ -229,20 +231,20 @@ class PlacesApi
                 'key' => $this->key,
             ],
         ];
-        
+
         if ($method == 'post') {
             $options = array_merge(['body' => json_encode($params)], $options);
         } else {
             $options['query'] = array_merge($options['query'], $params);
         }
-        
+
         $response = json_decode(
             $this->client->$method($uri, $options)->getBody()->getContents(),
             true
         );
-        
+
         $this->setStatus($response['status']);
-        
+
         if ($response['status'] !== 'OK'
             AND $response['status'] !== 'ZERO_RESULTS') {
             throw new GooglePlacesApiException(
@@ -250,10 +252,10 @@ class PlacesApi
                 "Error Messae: {$response['error_message']}"
             );
         }
-        
+
         return $response;
     }
-    
+
     /**
      * @param array $data
      *
@@ -262,14 +264,14 @@ class PlacesApi
     private function convertToCollection(array $data, $index = null)
     {
         $data = collect($data);
-        
+
         if ($index) {
             $data[$index] = collect($data[$index]);
         }
-        
+
         return $data;
     }
-    
+
     /**
      * @param mixed $status
      */
@@ -277,7 +279,7 @@ class PlacesApi
     {
         $this->status = $status;
     }
-    
+
     /**
      * @return mixed
      */
@@ -285,7 +287,7 @@ class PlacesApi
     {
         return $this->status;
     }
-    
+
     /**
      * @return null
      */
@@ -293,17 +295,17 @@ class PlacesApi
     {
         return $this->key;
     }
-    
+
     /**
      * @param null $key
      */
     public function setKey($key)
     {
         $this->key = $key;
-        
+
         return $this;
     }
-    
+
     /**
      * @throws \SKAgarwal\GoogleApi\Exceptions\GooglePlacesApiException
      */
@@ -313,7 +315,7 @@ class PlacesApi
             throw new GooglePlacesApiException('API KEY is not specified.');
         }
     }
-    
+
     /**
      * Prepare the params for the Place Search.
      *
@@ -327,12 +329,12 @@ class PlacesApi
     {
         $params['location'] = $location;
         $params['radius'] = $radius;
-        
+
         if (array_key_exists('rankby', $params)
             AND $params['rankby'] === 'distance'
         ) {
             unset($params['radius']);
-            
+
             if (!array_any_keys_exists(['keyword', 'name', 'type'], $params)) {
                 throw new GooglePlacesApiException("Nearby Search require one"
                     . " or more of 'keyword', 'name', or 'type' params since 'rankby' = 'distance'.");
@@ -340,10 +342,10 @@ class PlacesApi
         } elseif (!$radius) {
             throw new GooglePlacesApiException("'radius' param is not defined.");
         }
-        
+
         return $params;
     }
-    
+
     /**
      * @param $location
      * @param $radius
@@ -356,12 +358,12 @@ class PlacesApi
     {
         $params['location'] = $location;
         $params['radius'] = $radius;
-        
+
         if (!array_any_keys_exists(['keyword', 'name', 'type'], $params)) {
             throw new GooglePlacesApiException("Radar Search require one"
                 . " or more of 'keyword', 'name', or 'type' params.");
         }
-        
+
         return $params;
     }
 }
