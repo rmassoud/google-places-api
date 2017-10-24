@@ -48,7 +48,7 @@ class PlacesApi
         $this->key = $key;
 
         if( !$params['base_uri']) {
-            $params['base_uri'] => 'https://maps.googleapis.com/maps/api/place/';
+            $params['base_uri'] = 'https://maps.googleapis.com/maps/api/place/';
         }
 
         $this->client = new Client($params);
