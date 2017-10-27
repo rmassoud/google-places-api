@@ -43,17 +43,16 @@ class PlacesApi
      *
      * @param null $key
      */
-    public function __construct($key = null, $params = [])
+    public function __construct($key = null, $proxy)
     {
         $this->key = $key;
 
-        if( !isset($params['base_uri'])) {
-            $params['base_uri'] = 'https://maps.googleapis.com/maps/api/place/';
-        }
+        error_log( $proxy );
 
-        error_log(print_r($params, true));
-
-        $this->client = new Client($params);
+        $this->client = new Client([
+            'base_uri' => 'https://maps.googleapis.com/maps/api/place/',
+            'proxy' => $proxy
+        ]);
     }
 
     /**
