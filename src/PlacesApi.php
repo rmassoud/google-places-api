@@ -51,6 +51,8 @@ class PlacesApi
             $params['base_uri'] = 'https://maps.googleapis.com/maps/api/place/';
         }
 
+        error_log(print_r($params, true));
+
         $this->client = new Client($params);
     }
 
