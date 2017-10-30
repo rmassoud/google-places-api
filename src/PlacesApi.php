@@ -43,7 +43,7 @@ class PlacesApi
      *
      * @param null $key
      */
-    public function __construct($key = null, $proxy)
+    public function __construct($key = null, $proxy = FALSE)
     {
         $this->key = $key;
 
