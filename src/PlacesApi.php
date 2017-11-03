@@ -3,7 +3,12 @@
 namespace SKAgarwal\GoogleApi;
 
 use GuzzleHttp\Client;
+use Kevinrob\GuzzleCache\Storage\FlysystemStorage;
+use Kevinrob\GuzzleCache\Strategy\PrivateCacheStrategy;
+use League\Flysystem\Adapter\Local;
 use SKAgarwal\GoogleApi\Exceptions\GooglePlacesApiException;
+use GuzzleHttp\HandlerStack;
+use Kevinrob\GuzzleCache\CacheMiddleware;
 
 class PlacesApi
 {
@@ -43,16 +48,21 @@ class PlacesApi
      *
      * @param null $key
      */
-    public function __construct($key = null, $proxy = FALSE)
+    public function __construct($key = null, $proxy = FALSE, $stack = FALSE)
     {
         $this->key = $key;
 
-        error_log( $proxy );
-
-        $this->client = new Client([
+        $params = [
             'base_uri' => 'https://maps.googleapis.com/maps/api/place/',
-            'proxy' => $proxy
-        ]);
+            'proxy' => $proxy,
+        ];
+
+        if($stack) {
+            $params['handler'] = $stack;
+        }
+
+        $this->client = new Client($params);
+
     }
 
     /**
